@@ -3,19 +3,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
-//using UnityEngine.Experimental.XR;
 using UnityEngine.XR.ARSubsystems;
 
 public class ARTapToPlaceObj : MonoBehaviour
 {
-
+    public GameObject gameObj;
     public GameObject placementIndicator;
 
-    [SerializeField]
-    //private ARSessionOrigin arOrigin;
     private ARRaycastManager raycastManager;
     private Pose placeObj;
     private bool validPlacement = false;
+
+
     void Start()
     {
         raycastManager = FindObjectOfType<ARRaycastManager>();
@@ -25,6 +24,16 @@ public class ARTapToPlaceObj : MonoBehaviour
     {
         UpdatePosePlacement();
         UpdatePlaceIndicator();
+
+        if(validPlacement && Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
+        {
+            PlaceObject();
+        }
+    }
+
+    private void PlaceObject()
+    {
+        Instantiate(gameObj, placeObj.position, placeObj.rotation);
     }
 
     private void UpdatePlaceIndicator()
@@ -43,7 +52,6 @@ public class ARTapToPlaceObj : MonoBehaviour
     private void UpdatePosePlacement()
     {
         var screenCentre = Camera.current.ViewportToScreenPoint(new Vector3(.5f,.5f));
-
         var hits = new List<ARRaycastHit>();
         raycastManager.Raycast(screenCentre, hits, TrackableType.Planes);
 
@@ -51,6 +59,11 @@ public class ARTapToPlaceObj : MonoBehaviour
         if (validPlacement)
         {
             placeObj = hits[0].pose;
+
+            var camForward = Camera.current.transform.forward;
+            var camBearing = new Vector3(camForward.x, 0, camForward.z).normalized;
+
+            placeObj.rotation = Quaternion.LookRotation(camBearing);
         }
     }
 }
